@@ -1,3 +1,4 @@
+;;; soma-wgetpaste.el --- An interface to the wgetpaste tool  -*- lexical-binding: t -*-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; An interface to the wgetpaste tool.
