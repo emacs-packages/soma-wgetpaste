@@ -1,4 +1,7 @@
 ;;; soma-wgetpaste.el --- An interface to the wgetpaste tool  -*- lexical-binding: t -*-
+
+;; Package-Requires: ((emacs "27.1") (soma-utils "0"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; An interface to the wgetpaste tool.
@@ -45,12 +48,17 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; For cl-assert and cl-do:
+(require 'cl-lib)
+
 ;; For (soma-utils-chomp)
 ;;
 (require 'soma-utils)
 
-;; For set-clipboard-contents
-(require 'soma-set-clipboard-contents-init)
+;; set-clipboard-contents is defined in an init file (soma/inits), not in a
+;; package, so it cannot be a declared dependency.  It is expected to be
+;; loaded before wgetpaste-region runs:
+(declare-function set-clipboard-contents "soma-set-clipboard-contents-init")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -150,7 +158,7 @@ Note: When SERVICE or LANGUAGE are given, they must be a literal,
          (language (or
                     language
                     wgetpaste-default-language
-                    (wgetpaste--choose-langauge)))
+                    (wgetpaste--choose-language service)))
          (result
           (cond
             ((eq data 'nil)
@@ -162,7 +170,7 @@ Note: When SERVICE or LANGUAGE are given, they must be a literal,
             ('t ; Every argument has been given.
              (wgetpaste--send-with-all data service language)))))
     (kill-new result)
-    (message result)
+    (message "%s" result)
     result))
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -178,10 +186,10 @@ Note: When SERVICE or LANGUAGE are given, they must be a literal,
   "Given a SERVICE, return a list of languages from wgetpaste."
   (let* ((raw-languages (wgetpaste--get-raw-languages service))
          (all-lines (split-string raw-languages "\n"))
-         (first-line (first all-lines)))
+         (first-line (cl-first all-lines)))
     (if (string-match "not a supported service" first-line)
-        (error (format first-line))
-      (let* ((relevant-lines (rest all-lines))
+        (error "%s" first-line)
+      (let* ((relevant-lines (cl-rest all-lines))
          (lines-sans-leading-spaces
            (wgetpaste--strip-leading-spaces relevant-lines))
          (languages (wgetpaste--strip-leading-asterisk
@@ -242,7 +250,7 @@ Note: When SERVICE or LANGUAGE are given, they must be a literal,
   (let* ((raw-services (wgetpaste--get-raw-services))
          (all-lines (split-string raw-services "\n"))
          ; Skip the first three lines, as they're not relevant:
-         (relevant-lines (rest (rest (rest all-lines))))
+         (relevant-lines (cl-rest (cl-rest (cl-rest all-lines))))
          ; Put the first column of each line in to a list:
          (lines-sans-leading-spaces
            (wgetpaste--strip-leading-spaces relevant-lines))
@@ -309,7 +317,7 @@ Note: When SERVICE or LANGUAGE are given, they must be a literal,
         (deactivate-mark)
         (kill-new result)
         (set-clipboard-contents result)
-        (message result)
+        (message "%s" result)
         result)
     (error "Error: Invalid region.")))
 ;;
